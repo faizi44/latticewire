@@ -62,8 +62,8 @@ p { margin: 0; }
   border-bottom: 1px solid var(--line-soft);
 }
 /* Wordmark: Sora Bold, tightly tracked, beside the lattice mark. */
-.brand { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--ink); text-decoration: none; font: 700 1.3rem/1 "Sora", var(--body); letter-spacing: -0.045em; }
-.brand b { font-weight: 700; background: var(--wire); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand { display: inline-flex; align-items: center; gap: 0.7rem; color: var(--violet); text-decoration: none; font: 700 1.3rem/1 "Sora", var(--body); letter-spacing: -0.045em; }
+.brand b { font-weight: 700; }
 .footer .brand { font-size: 1.12rem; }
 
 .nav nav { display: flex; gap: 1.6rem; margin-left: auto; }
