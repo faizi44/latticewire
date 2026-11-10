@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Stealth · LatticeWire</title>
+  <meta name="description" content="Phantom, Ghost and the TLS fallback: how LatticeWire looks like ordinary web traffic.">
+  <meta property="og:title" content="Stealth · LatticeWire">
+  <meta property="og:description" content="Phantom, Ghost and the TLS fallback: how LatticeWire looks like ordinary web traffic.">
+  <meta property="og:image" content="https://faizi44.github.io/latticewire/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F5F7FC">
+  <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="LatticeWire home">
+      <img src="assets/logo-mark.svg" alt="" width="34" height="34">
+      <span>Lattice<b>Wire</b></span>
+    </a>
+    <nav id="site-nav" aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html" aria-current="page">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <a class="btn btn-ghost" href="index.html#start">Get started</a>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <h1>Hidden in plain sight</h1>
+      <p>Three ways to make a LatticeWire tunnel look like the rest of the web, from a QUIC handshake of your own to the genuine handshake of a real site.</p>
+      <svg class="page-wire" viewBox="0 0 520 26" aria-hidden="true">
+          <defs><linearGradient id="pwGrad" x1="0" x2="1"><stop offset="0" stop-color="#5B3DF5"/><stop offset="1" stop-color="#0891B2"/></linearGradient></defs>
+          <path d="M6 18 L90 18 L120 6 L210 6 L240 18 L330 18 L360 6 L514 6"/>
+          <circle cx="6" cy="18" r="5" style="animation-delay:.2s"/><circle cx="120" cy="6" r="4" style="animation-delay:.45s"/>
+          <circle cx="240" cy="18" r="4" style="animation-delay:.75s"/><circle cx="360" cy="6" r="4" style="animation-delay:1.05s"/>
+          <circle cx="514" cy="6" r="5" style="animation-delay:1.4s"/>
+        </svg>
+    </section>
+    <section aria-labelledby="modes-title">
+      <div class="section-head">
+        <h2 id="modes-title">What the network sees</h2>
+        <p>Pick a mode and watch the capture an observer would record.</p>
+      </div>
+      <div class="observer" data-observer>
+        <div class="tabs" role="tablist" aria-label="Mode">
+          <button role="tab" aria-selected="false" data-mode="plain">Plain</button>
+          <button role="tab" aria-selected="true" data-mode="phantom">Phantom</button>
+          <button role="tab" aria-selected="false" data-mode="ghost">Ghost</button>
+          <button role="tab" aria-selected="false" data-mode="tls">TLS fallback</button>
+        </div>
+        <div class="capture" role="tabpanel" aria-live="polite">
+          <ol class="packets" data-packets></ol>
+          <div class="capture-text">
+            <h3 data-mode-title></h3>
+            <p data-mode-body></p>
+            <p class="capture-when" data-mode-when></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="rotate-title">
+      <div class="section-head">
+        <h2 id="rotate-title">A fresh connection every half hour</h2>
+        <p>Stealth clients move to a new cover connection, with a new port and new connection IDs, at a random point around the interval you set. The tunnel inside carries on without a dropped ping.</p>
+      </div>
+      <div class="rotation" data-rotation>
+        <div class="player-controls"><button class="primary" type="button" data-rotate>Rotate now</button></div>
+        <div class="conns" data-conns></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="keys-title">
+      <div class="section-head">
+        <h2 id="keys-title">One key per device</h2>
+        <p>Give every client its own stealth key in its config and in its entry on the server. A lost or retired device is revoked by changing that one entry; every other device keeps working, and connection IDs carry nothing that ties packets to a key.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="domain-title">
+      <div class="section-head">
+        <h2 id="domain-title">The best cover is your own site</h2>
+        <p>Use a domain you control, so the site named in the handshake really lives at your server's address.</p>
+      </div>
+      <ol class="setup">
+        <li><h3>Point a domain at your server</h3><p>For example <code>cdn.example.net</code>.</p></li>
+        <li><h3>Run your site on other ports</h3><p>LatticeWire takes UDP and TCP 443. Serve the site with HTTPS and HTTP/3 on 8443 and plain HTTP on 8080, for example with Caddy.</p></li>
+        <li><h3>Point LatticeWire at it</h3><div class="code"><pre><code>stealth_mode  = "ghost"
+mask_sni      = "cdn.example.net"
+mask_server   = "127.0.0.1:8443"
+tcp_listen    = "0.0.0.0:443"
+cover_backend = "127.0.0.1:8080"</code></pre><button class="copy" type="button">Copy</button></div></li>
+        <li><h3>Connect clients with transport = "auto"</h3><p>They use QUIC when they can and TLS on 443 when they can't. Visitors who aren't clients see your website on both.</p></li>
+      </ol>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.svg" alt="" width="28" height="28"><span>Lattice<b>Wire</b></span></a>
+    <p>Quantum-safe tunnels, built with Rust.</p>
+    <nav aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

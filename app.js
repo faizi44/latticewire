@@ -314,8 +314,141 @@
     });
   }
 
+  // ---------------- whitepaper: handshake player ----------------
+  function player() {
+    const root = document.querySelector("[data-player]");
+    if (!root) return;
+    const msgs = [...root.querySelectorAll(".msg")];
+    const caption = root.querySelector("[data-caption]");
+    const play = root.querySelector("[data-play]");
+    const captions = [
+      "Press play to step through a handshake.",
+      "The client sends its ephemeral key, its identity sealed so only the server can read it, and a fresh ML-KEM-768 key. The server checks mac1 with a single hash before any other work.",
+      "The server encapsulates to that key, assigns the tunnel addresses, picks the cipher and signs the whole conversation with ML-DSA-65.",
+      "Both sides derive the same keys from every shared secret and the transcript. Data flows, sealed with AES-256-GCM or XChaCha20-Poly1305.",
+    ];
+    let step = 0, timer = null;
+    const show = (n) => {
+      step = n;
+      msgs.forEach((m, i) => m.classList.toggle("on", i < n));
+      caption.textContent = captions[n];
+    };
+    const stop = () => { clearInterval(timer); timer = null; play.textContent = "Play"; };
+    play.addEventListener("click", () => {
+      if (timer) return stop();
+      if (step >= msgs.length) show(0);
+      play.textContent = "Pause";
+      show(step + 1);
+      timer = setInterval(() => (step >= msgs.length ? stop() : show(step + 1)), reduced ? 900 : 1900);
+    });
+    root.querySelector("[data-step-btn]").addEventListener("click", () => { stop(); show(step >= msgs.length ? 0 : step + 1); });
+    root.querySelector("[data-reset]").addEventListener("click", () => { stop(); show(0); });
+    show(0);
+  }
+
+  // ---------------- whitepaper: contents follow the reader ----------------
+  function tocSpy() {
+    const toc = document.querySelector("[data-toc]");
+    if (!toc) return;
+    const links = new Map([...toc.querySelectorAll("a")].map((a) => [a.getAttribute("href").slice(1), a]));
+    const seen = new Map();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => seen.set(e.target.id, e.isIntersecting));
+      const current = [...links.keys()].find((id) => seen.get(id));
+      if (current) links.forEach((a, id) => a.classList.toggle("active", id === current));
+    }, { rootMargin: "-80px 0px -60% 0px" });
+    links.forEach((_, id) => { const s = document.getElementById(id); if (s) io.observe(s); });
+  }
+
+  // ---------------- roadmap: rail draws, milestones light up ----------------
+  function roadmap() {
+    const line = document.querySelector("[data-timeline]");
+    if (!line) return;
+    const rail = line.querySelector(".rail");
+    const phases = [...line.querySelectorAll(".phase")];
+    const fit = () => {
+      const visible = phases.filter((p) => !p.hidden);
+      const last = visible[visible.length - 1];
+      rail.style.height = last ? `${last.offsetTop + 20}px` : "0";
+    };
+    const light = () => phases.forEach((p, i) => setTimeout(() => p.classList.add("lit"), reduced ? 0 : 250 + i * 380));
+    requestAnimationFrame(() => { fit(); light(); });
+    window.addEventListener("resize", fit);
+    const filters = document.querySelector("[data-filters]");
+    if (filters) {
+      tabs(filters.parentElement, "data-filter", (f) => {
+        phases.forEach((p) => { p.hidden = f !== "all" && p.dataset.phase !== f; });
+        fit();
+      });
+    }
+  }
+
+  // ---------------- changelog: expandable releases ----------------
+  function releases() {
+    document.querySelectorAll(".release > button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const rel = btn.parentElement;
+        const open = rel.dataset.open !== "true";
+        rel.dataset.open = String(open);
+        btn.setAttribute("aria-expanded", String(open));
+      });
+    });
+  }
+
+  // ---------------- stealth: cover rotation demo ----------------
+  function rotation() {
+    const root = document.querySelector("[data-rotation]");
+    if (!root) return;
+    const list = root.querySelector("[data-conns]");
+    const hex = (n) => [...crypto.getRandomValues(new Uint8Array(n))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    const add = () => {
+      list.querySelectorAll(".conn").forEach((c) => c.classList.add("old"));
+      const row = document.createElement("div");
+      row.className = "conn";
+      const port = 49152 + Math.floor(Math.random() * 16000);
+      const life = document.createElement("span");
+      life.className = "life";
+      if (!reduced) life.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 900, easing: "cubic-bezier(.2,.8,.2,1)" });
+      const a = document.createElement("span"); a.textContent = `port ${port}`;
+      const b = document.createElement("span"); b.className = "tag2"; b.textContent = `cid ${hex(4)}`;
+      row.append(a, life, b);
+      list.prepend(row);
+      while (list.children.length > 4) list.lastElementChild.remove();
+    };
+    root.querySelector("[data-rotate]").addEventListener("click", add);
+    add();
+  }
+
+  // ---------------- benchmarks: gain meters fill once ----------------
+  function gains() {
+    const root = document.querySelector("[data-gains]");
+    if (!root) return;
+    const fill = () => root.querySelectorAll("i[data-w]").forEach((i, k) => {
+      setTimeout(() => { i.style.width = `${i.dataset.w}%`; }, reduced ? 0 : 150 + k * 140);
+    });
+    new IntersectionObserver(([e], io) => { if (e.isIntersecting) { fill(); io.disconnect(); } }, { threshold: 0.3 }).observe(root);
+  }
+
+  // ---------------- compact navigation ----------------
+  function menu() {
+    const btn = document.querySelector(".menu-btn");
+    if (!btn) return;
+    const header = btn.closest(".nav");
+    const set = (open) => { header.classList.toggle("open", open); btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "Close" : "Menu"; };
+    btn.addEventListener("click", () => set(!header.classList.contains("open")));
+    header.querySelectorAll("nav a").forEach((a) => a.addEventListener("click", () => set(false)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") set(false); });
+  }
+
+  menu();
   lattice();
   chart();
   observer();
   copyButtons();
+  player();
+  tocSpy();
+  roadmap();
+  releases();
+  rotation();
+  gains();
 })();

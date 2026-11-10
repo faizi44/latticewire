@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Whitepaper · LatticeWire</title>
+  <meta name="description" content="The LatticeWire protocol: hybrid post-quantum handshake, transport, stealth layer and data-path design.">
+  <meta property="og:title" content="Whitepaper · LatticeWire">
+  <meta property="og:description" content="The LatticeWire protocol: hybrid post-quantum handshake, transport, stealth layer and data-path design.">
+  <meta property="og:image" content="https://faizi44.github.io/latticewire/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F5F7FC">
+  <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="LatticeWire home">
+      <img src="assets/logo-mark.svg" alt="" width="34" height="34">
+      <span>Lattice<b>Wire</b></span>
+    </a>
+    <nav id="site-nav" aria-label="Pages">
+      <a href="whitepaper.html" aria-current="page">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <a class="btn btn-ghost" href="index.html#start">Get started</a>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <h1>The LatticeWire protocol</h1>
+      <p>How LatticeWire builds a quantum-safe tunnel in one round trip, moves data at line rate, and disguises itself as web traffic. Version 3 of the protocol.</p>
+      <svg class="page-wire" viewBox="0 0 520 26" aria-hidden="true">
+          <defs><linearGradient id="pwGrad" x1="0" x2="1"><stop offset="0" stop-color="#5B3DF5"/><stop offset="1" stop-color="#0891B2"/></linearGradient></defs>
+          <path d="M6 18 L90 18 L120 6 L210 6 L240 18 L330 18 L360 6 L514 6"/>
+          <circle cx="6" cy="18" r="5" style="animation-delay:.2s"/><circle cx="120" cy="6" r="4" style="animation-delay:.45s"/>
+          <circle cx="240" cy="18" r="4" style="animation-delay:.75s"/><circle cx="360" cy="6" r="4" style="animation-delay:1.05s"/>
+          <circle cx="514" cy="6" r="5" style="animation-delay:1.4s"/>
+        </svg>
+    </section>
+    <section>
+      <div class="doc">
+        <nav class="toc" aria-label="Contents" data-toc>
+          <p>Contents</p>
+        <a href="#abstract">Abstract</a>
+        <a href="#goals">Design goals</a>
+        <a href="#primitives">Building blocks</a>
+        <a href="#handshake">The handshake</a>
+        <a href="#keys">Key schedule</a>
+        <a href="#admission">Admission and floods</a>
+        <a href="#transport">Data transport</a>
+        <a href="#lifecycle">Session lifecycle</a>
+        <a href="#datapath">Data-path engineering</a>
+        <a href="#network">Addressing and roaming</a>
+        <a href="#stealth">Stealth layer</a>
+        <a href="#fallback">TLS fallback</a>
+        <a href="#impl">Implementation</a>
+        <a href="#future">Future work</a>
+        </nav>
+        <article class="prose">
+          <section id="abstract">
+            <h2>Abstract</h2>
+            <p class="abstract">LatticeWire is a point-to-site VPN whose handshake combines classical X25519 with ML-KEM-768 and authenticates the server with ML-DSA-65, so that traffic recorded today stays private even against an attacker who later builds a quantum computer. The handshake takes one round trip and follows the Noise IK pattern. Data is sealed with AES-256-GCM or XChaCha20-Poly1305 and carried over a batched UDP data path. An optional stealth layer makes the tunnel look like an HTTP/3 connection to a real website, with a TLS-over-TCP fallback for networks that block UDP.</p>
+          </section>
+
+          <section id="goals">
+            <h2>Design goals</h2>
+            <ul>
+              <li><b>Quantum-safe confidentiality.</b> Session keys depend on both a classical and a post-quantum secret; recovering one is not enough.</li>
+              <li><b>Strong server authentication.</b> The server signs the entire handshake transcript with a post-quantum signature.</li>
+              <li><b>One round trip.</b> Two messages, then data, with no extra exchange for cipher negotiation.</li>
+              <li><b>Line-rate data path.</b> Per-packet work small enough to beat established tunnels on the same hardware.</li>
+              <li><b>Censorship resistance.</b> An optional encoding that matches real QUIC and TLS on the wire.</li>
+              <li><b>Operability.</b> Server-assigned addresses, IPv4 and IPv6, roaming and automatic recovery.</li>
+            </ul>
+          </section>
+
+          <section id="primitives">
+            <h2>Building blocks</h2>
+            <table>
+              <tr><th>Purpose</th><th>Primitive</th><th>Standard</th></tr>
+              <tr><td>Classical key agreement</td><td>X25519</td><td>RFC 7748</td></tr>
+              <tr><td>Post-quantum key encapsulation</td><td>ML-KEM-768</td><td>FIPS 203</td></tr>
+              <tr><td>Server signature</td><td>ML-DSA-65</td><td>FIPS 204</td></tr>
+              <tr><td>Data encryption</td><td>AES-256-GCM, XChaCha20-Poly1305</td><td>SP 800-38D, RFC 8439 + XChaCha</td></tr>
+              <tr><td>Key derivation and hashing</td><td>BLAKE3 (derive_key mode, domain-separated)</td><td></td></tr>
+            </table>
+          </section>
+
+          <section id="handshake">
+            <h2>The handshake</h2>
+            <p>LatticeWire extends the Noise IK pattern. The client already knows the server's static X25519 key and ML-DSA-65 verification key from its configuration.</p>
+            <div class="formula">→ e, es, {s}, ss, {kem_pk, timestamp, offers}<br>← e, ee, {kem_ct, assigned addresses, cipher, signature}</div>
+            <div class="player" data-player>
+              <div class="player-stage">
+                <div class="party client">Client<small>your device</small></div>
+                <div class="lanes">
+                  <div class="msg to-server" data-step="1"><b>ClientHello, 1,346 bytes</b><span>e · {s} under es · {ML-KEM pk, time, offers} under es+ss · mac1, mac2</span></div>
+                  <div class="msg to-client" data-step="2"><b>ServerHello, 4,490 bytes</b><span>e · {ML-KEM ct, IPv4, IPv6, cipher, ML-DSA-65 signature} under ee</span></div>
+                  <div class="msg data" data-step="3"><b>Encrypted data</b><span>[type][counter][ciphertext][tag] in both directions</span></div>
+                </div>
+                <div class="party server">Server<small>your VPN</small></div>
+              </div>
+              <p class="player-caption" data-caption aria-live="polite">Press play to step through a handshake.</p>
+              <div class="player-controls">
+                <button class="primary" type="button" data-play>Play</button>
+                <button type="button" data-step-btn>Step</button>
+                <button type="button" data-reset>Reset</button>
+              </div>
+            </div>
+            <h3>ClientHello</h3>
+            <p>The client sends a fresh ephemeral X25519 key and a random nonce, then two sealed blocks. Its static public key is encrypted under a key derived from <code>es</code>, the ephemeral-static agreement, so only the real server learns which client is connecting. The second block carries a fresh ML-KEM-768 public key, a millisecond timestamp and a capability byte. It is sealed under a key derived from both <code>es</code> and <code>ss</code>, the static-static agreement, which only the holder of the client's private key can compute. Opening it therefore proves the client's identity in the first message.</p>
+            <h3>ServerHello</h3>
+            <p>The server checks freshness, encapsulates to the client's ML-KEM key, assigns the tunnel addresses, chooses the cipher and signs the transcript with ML-DSA-65 under a dedicated context string. The reply is sealed under a key derived from <code>ee</code>. The transcript covers the ClientHello bytes, the server's ephemeral key, the KEM ciphertext, both assigned addresses and the cipher choice, so none of them can be altered in flight.</p>
+            <h3>Freshness</h3>
+            <p>A hello is accepted only if its authenticated timestamp is within three minutes of the server's clock and newer than the last one from that client. An identical retransmission from the same address receives the cached reply, up to eight times, so packet loss never costs a second key exchange.</p>
+            <h3>Cipher negotiation</h3>
+            <p>The client sets an offer bit when its CPU accelerates AES. The server chooses AES-256-GCM only if both sides have the hardware and policy allows it, and otherwise XChaCha20-Poly1305. Because the choice is inside the signed transcript, it cannot be downgraded, and a client rejects a choice it did not offer.</p>
+          </section>
+
+          <section id="keys">
+            <h2>Key schedule</h2>
+            <p>All secrets are mixed in one BLAKE3 derivation, then split into one key per direction.</p>
+            <div class="formula">transcript = H("transcript", ClientHello ‖ e_s ‖ kem_ct ‖ ipv4 ‖ ipv6 ‖ cipher)<br>session    = KDF("session-key", ee ‖ ss ‖ kem_ss ‖ es ‖ transcript)<br>k_i, k_r   = KDF("initiator", session), KDF("responder", session)</div>
+            <p>For XChaCha20-Poly1305, each direction's 24-byte nonce is a fixed 16-byte prefix derived from its key followed by the 8-byte packet counter. LatticeWire computes the HChaCha20 subkey once per session and seals each packet with ChaCha20-Poly1305 under the nonce <code>0⁴ ‖ counter</code>, which is byte-for-byte the XChaCha construction. For AES-256-GCM, each direction uses a separately derived key with the same counter nonce.</p>
+          </section>
+
+          <section id="admission">
+            <h2>Admission and floods</h2>
+            <p>Every ClientHello ends with <code>mac1</code>, keyed by the server's public key, and <code>mac2</code>. The server verifies <code>mac1</code> with one hash before any public-key work, so random traffic costs almost nothing. Above 1,000 valid hellos per second the server is under load: it then requires a valid <code>mac2</code>, keyed by a cookie bound to the sender's address, and answers everything else with a 57-byte cookie reply. The cookie secret rotates every two minutes, and proven senders get a per-address budget. A forged flood never sees a cookie, so it can't push the server into expensive work.</p>
+          </section>
+
+          <section id="transport">
+            <h2>Data transport</h2>
+            <p>Each data packet is <code>[type 1][counter 8][ciphertext][tag 16]</code>, with the counter as associated data. Counters are reserved in queue order, so packets of a flow leave in the order they were sealed. On receive, packets are decrypted and then checked against a 4,096-packet anti-replay window (RFC 6479 ring bitmap, constant time per packet) exactly once, in arrival order. A duplicate can never be accepted twice, even if two copies are decrypted at the same moment.</p>
+          </section>
+
+          <section id="lifecycle">
+            <h2>Session lifecycle</h2>
+            <ul>
+              <li><b>Rekey</b> every 15 minutes with up to three minutes of jitter, or after 2<sup>32</sup> packets, whichever comes first.</li>
+              <li><b>Hard limits</b> at 45 minutes or 2<sup>48</sup> packets, after which a key is never used again.</li>
+              <li><b>No gaps.</b> The server holds new keys as pending and promotes them on the first valid packet, and the previous keys keep decrypting late packets for 30 seconds. A lost ServerHello never interrupts traffic.</li>
+              <li><b>Liveness.</b> Keepalives every 15 seconds; a client marks the link stale after 20 seconds of silence and reconnects on a fresh socket after 25.</li>
+            </ul>
+          </section>
+
+          <section id="datapath">
+            <h2>Data-path engineering</h2>
+            <p>On Linux the TUN device runs with virtio headers, so the kernel hands LatticeWire whole TCP super-segments. They are split, sealed and sent with UDP GSO, many datagrams per system call. On receive, UDP GRO delivers batches. After decryption, consecutive segments of each TCP flow are merged back into one large frame, with checksums verified first, so the kernel's TCP stack runs once per 64 KB instead of once per packet.</p>
+            <p>Workers cache the current keys and only take a lock after a rekey, time checks read a shared millisecond clock, and decrypted batches go to a dedicated TUN writer so decryption and kernel work overlap.</p>
+          </section>
+
+          <section id="network">
+            <h2>Addressing and roaming</h2>
+            <p>The server assigns each client an IPv4 tunnel address and, when a prefix is configured, an IPv6 address built from the prefix with the IPv4 address in its low 32 bits. Both are signed in the ServerHello. The server checks that every decrypted packet carries the client's own source address. Roaming is handled by the handshake itself: a fresh authenticated hello from a new address moves the session.</p>
+          </section>
+
+          <section id="stealth">
+            <h2>Stealth layer</h2>
+            <p>In Phantom mode a client opens with a genuine QUIC Initial carrying a browser-style TLS ClientHello for the configured site. Its destination connection ID carries a MAC under the client's stealth key, so the server recognises it while anyone else sees a random ID. The server answers with a QUIC server flight shaped like a real one, within the three-times anti-amplification limit, and the tunnel then continues in QUIC short-header packets addressed to the connection IDs chosen in that exchange.</p>
+            <p>In Ghost mode the server forwards the client's Initial unchanged to a real web server and relays the genuine reply, so the opening is the site's real handshake, certificate included.</p>
+            <p>Every tunnel packet's type and counter are masked with a keystream derived from a sample of the ciphertext. Connection IDs are random, and the server recognises them through a table of the IDs it issued. Each client may have its own stealth key, random padding hides packet sizes, idle periods carry cover traffic, and clients move to a fresh cover connection roughly every half hour.</p>
+          </section>
+
+          <section id="fallback">
+            <h2>TLS fallback</h2>
+            <p>When UDP gets no answer, a client opens TLS 1.3 to port 443 and sends a 40-byte token: a random nonce, a timestamp and a MAC under its stealth key. Each nonce is accepted once. The stream then carries length-prefixed datagrams into the normal data path through a loopback socket. Any connection without a valid token is handed to the operator's real website, so probers see an ordinary HTTPS site.</p>
+          </section>
+
+          <section id="impl">
+            <h2>Implementation</h2>
+            <p>LatticeWire is written in Rust on the Tokio runtime. It uses <code>ring</code>'s assembly AES-GCM and ChaCha20-Poly1305, Cryspen's <code>libcrux</code> implementations of ML-KEM and ML-DSA, and <code>x25519-dalek</code>. The test suite has 98 unit and integration tests, including RFC test vectors for the QUIC key schedule and byte-for-byte checks against reference XChaCha20-Poly1305, and 41 end-to-end checks that run real tunnels in Docker.</p>
+          </section>
+
+          <section id="future">
+            <h2>Future work</h2>
+            <ul>
+              <li>KEM-based server authentication in place of the signature, halving the handshake size.</li>
+              <li>Post-quantum client authentication.</li>
+              <li>Variable-length connection IDs for Ghost mask servers.</li>
+              <li>An independent audit of the protocol and implementation.</li>
+            </ul>
+          </section>
+        </article>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.svg" alt="" width="28" height="28"><span>Lattice<b>Wire</b></span></a>
+    <p>Quantum-safe tunnels, built with Rust.</p>
+    <nav aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

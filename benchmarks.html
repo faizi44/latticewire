@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Benchmarks · LatticeWire</title>
+  <meta name="description" content="LatticeWire throughput, handshake and resilience results, with method.">
+  <meta property="og:title" content="Benchmarks · LatticeWire">
+  <meta property="og:description" content="LatticeWire throughput, handshake and resilience results, with method.">
+  <meta property="og:image" content="https://faizi44.github.io/latticewire/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F5F7FC">
+  <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="LatticeWire home">
+      <img src="assets/logo-mark.svg" alt="" width="34" height="34">
+      <span>Lattice<b>Wire</b></span>
+    </a>
+    <nav id="site-nav" aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html" aria-current="page">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <a class="btn btn-ghost" href="index.html#start">Get started</a>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <h1>Measured, not promised</h1>
+      <p>Every number here comes from the same test bed, the same tool and the same settings for each tunnel.</p>
+      <svg class="page-wire" viewBox="0 0 520 26" aria-hidden="true">
+          <defs><linearGradient id="pwGrad" x1="0" x2="1"><stop offset="0" stop-color="#5B3DF5"/><stop offset="1" stop-color="#0891B2"/></linearGradient></defs>
+          <path d="M6 18 L90 18 L120 6 L210 6 L240 18 L330 18 L360 6 L514 6"/>
+          <circle cx="6" cy="18" r="5" style="animation-delay:.2s"/><circle cx="120" cy="6" r="4" style="animation-delay:.45s"/>
+          <circle cx="240" cy="18" r="4" style="animation-delay:.75s"/><circle cx="360" cy="6" r="4" style="animation-delay:1.05s"/>
+          <circle cx="514" cy="6" r="5" style="animation-delay:1.4s"/>
+        </svg>
+    </section>
+    <section aria-labelledby="tp-title">
+      <div class="section-head">
+        <h2 id="tp-title">Throughput</h2>
+        <p>iperf3 over TCP, median of three runs, alternating the order of tunnels between runs.</p>
+      </div>
+      <div class="chart" data-chart>
+        <div class="tabs" role="tablist" aria-label="Test">
+          <button role="tab" aria-selected="true" data-test="0">1 stream up</button>
+          <button role="tab" aria-selected="false" data-test="1">1 stream down</button>
+          <button role="tab" aria-selected="false" data-test="2">4 streams up</button>
+          <button role="tab" aria-selected="false" data-test="3">4 streams down</button>
+        </div>
+        <div class="bars" role="tabpanel" aria-live="polite">
+          <div class="bar-row bar-lw"><span class="bar-name">LatticeWire</span><span class="bar-track"><span class="bar-fill"></span></span><span class="bar-val"></span></div>
+          <div class="bar-row bar-ph"><span class="bar-name">LatticeWire Phantom</span><span class="bar-track"><span class="bar-fill"></span></span><span class="bar-val"></span></div>
+          <div class="bar-row bar-wg"><span class="bar-name">wireguard-go</span><span class="bar-track"><span class="bar-fill"></span></span><span class="bar-val"></span></div>
+          <div class="bar-row bar-kw"><span class="bar-name">WireGuard (kernel)</span><span class="bar-track"><span class="bar-fill"></span></span><span class="bar-val"></span></div>
+        </div>
+        <p class="note">Docker on one Apple-silicon Mac, both tunnel ends sharing 8 vCPUs. Compare the tunnels with each other; your own link sets the absolute numbers.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="gain-title">
+      <div class="section-head">
+        <h2 id="gain-title">Where the speed comes from</h2>
+        <p>Each change measured on its own, in the order it landed.</p>
+      </div>
+      <div class="gains" data-gains>
+        <div class="gain"><b>Assembly ChaCha20-Poly1305, subkey cached per session</b><p>The same bytes on the wire, a fraction of the work per packet.</p><span class="meter"><i data-w="100"></i></span><em>2×</em></div>
+        <div class="gain"><b>AES-256-GCM on AES hardware</b><p>306 ns instead of 1,073 ns to seal a 1,400-byte packet.</p><span class="meter"><i data-w="85"></i></span><em>1.7×</em></div>
+        <div class="gain"><b>TCP coalescing before the TUN</b><p>The kernel handles 64 KB at a time instead of single packets.</p><span class="meter"><i data-w="40"></i></span><em>+40% down</em></div>
+        <div class="gain"><b>Stealth framing without copies</b><p>Header space is reserved up front instead of shifting each packet.</p><span class="meter"><i data-w="12"></i></span><em>+12% Phantom</em></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="more-title">
+      <div class="section-head"><h2 id="more-title">Every mode at speed</h2></div>
+      <div class="stat-grid">
+        <div><b>7.2 Gb/s</b><span>IPv6 inside the tunnel</span></div>
+        <div><b>6.2 Gb/s</b><span>Ghost, relaying a real site's handshake</span></div>
+        <div><b>5.8 + 5.0 Gb/s</b><span>Both directions at once</span></div>
+        <div><b>~750 Mb/s</b><span>TLS fallback with UDP blocked</span></div>
+        <div><b>2–6 ms</b><span>Handshake to first packet</span></div>
+        <div><b>0 dropped pings</b><span>Rekeying every 20 seconds under full load</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="res-title">
+      <div class="section-head"><h2 id="res-title">Resilience</h2></div>
+      <div class="stat-grid">
+        <div><b>2 s</b><span>Back after a 70-second silent outage</span></div>
+        <div><b>~22 s</b><span>To reconnect on a fresh socket when the old path is blocked</span></div>
+        <div><b>710 GB</b><span>Moved in a 10-minute soak, memory flat throughout</span></div>
+        <div><b>170k/s</b><span>Forged hellos absorbed while a real client still connects</span></div>
+        <div><b>0%</b><span>Ping loss across cover rotations</span></div>
+        <div><b>98 + 41</b><span>Unit tests and end-to-end checks</span></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="method-title">
+      <div class="section-head"><h2 id="method-title">Method</h2></div>
+      <div class="prose">
+        <table>
+          <tr><th>Host</th><td>Apple-silicon Mac, Docker via OrbStack, Linux 6.17, 8 vCPUs shared by both tunnel ends</td></tr>
+          <tr><th>Tool</th><td>iperf3, TCP, 8-second runs, median of 3, alternating order</td></tr>
+          <tr><th>LatticeWire</th><td>Protocol 3, release build, AES-256-GCM negotiated, MTU 1416</td></tr>
+          <tr><th>WireGuard</th><td>wireguard-go v0.0.20250522 built from source with GSO/GRO, and kernel WireGuard, MTU 1420</td></tr>
+        </table>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.svg" alt="" width="28" height="28"><span>Lattice<b>Wire</b></span></a>
+    <p>Quantum-safe tunnels, built with Rust.</p>
+    <nav aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

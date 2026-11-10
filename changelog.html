@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Changelog · LatticeWire</title>
+  <meta name="description" content="Release notes for every LatticeWire protocol version.">
+  <meta property="og:title" content="Changelog · LatticeWire">
+  <meta property="og:description" content="Release notes for every LatticeWire protocol version.">
+  <meta property="og:image" content="https://faizi44.github.io/latticewire/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F5F7FC">
+  <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="LatticeWire home">
+      <img src="assets/logo-mark.svg" alt="" width="34" height="34">
+      <span>Lattice<b>Wire</b></span>
+    </a>
+    <nav id="site-nav" aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html" aria-current="page">Changelog</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <a class="btn btn-ghost" href="index.html#start">Get started</a>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <h1>What's new</h1>
+      <p>Release notes for each protocol version. Upgrade the server and all clients together.</p>
+      <svg class="page-wire" viewBox="0 0 520 26" aria-hidden="true">
+          <defs><linearGradient id="pwGrad" x1="0" x2="1"><stop offset="0" stop-color="#5B3DF5"/><stop offset="1" stop-color="#0891B2"/></linearGradient></defs>
+          <path d="M6 18 L90 18 L120 6 L210 6 L240 18 L330 18 L360 6 L514 6"/>
+          <circle cx="6" cy="18" r="5" style="animation-delay:.2s"/><circle cx="120" cy="6" r="4" style="animation-delay:.45s"/>
+          <circle cx="240" cy="18" r="4" style="animation-delay:.75s"/><circle cx="360" cy="6" r="4" style="animation-delay:1.05s"/>
+          <circle cx="514" cy="6" r="5" style="animation-delay:1.4s"/>
+        </svg>
+    </section>
+    <section>
+      <div class="releases" data-releases>
+      <article class="release" data-open="true">
+        <button type="button" aria-expanded="true">
+          <span class="ver">Protocol 3</span>
+          <span class="title">Speed, reach and stealth<small>AES-GCM fast path, IPv6, cookies, TLS fallback, per-client keys</small></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="release-body"><div>
+          <div class="groups">
+            <div><h3>Cipher</h3><ul><li>AES-256-GCM when both ends have hardware AES, signed so it can't be downgraded</li><li>ChaCha20-Poly1305 in assembly with the XChaCha subkey cached per session</li></ul></div>
+            <div><h3>Data path</h3><ul><li>TCP receive coalescing on Linux TUN writes</li><li>Constant-time replay window, checked once in arrival order</li><li>Cached keys, shared clock, batched TUN writes, large socket buffers</li></ul></div>
+            <div><h3>Network</h3><ul><li>IPv6 inside the tunnel with NAT66, and IPv6 endpoints</li><li>WireGuard-style cookie flood protection</li></ul></div>
+            <div><h3>Stealth</h3><ul><li>Ghost relays a real site's handshake byte for byte</li><li>Phantom server flights shaped like real QUIC, with continuing connection IDs</li><li>Per-client stealth keys, cover rotation, mask servers by host name</li><li>TLS-over-TCP fallback with a cover web backend</li></ul></div>
+            <div><h3>Handshake</h3><ul><li>Plain handshakes in 2–6 ms, Phantom in about 20 ms</li></ul></div>
+          </div>
+        </div></div>
+      </article>
+      <article class="release" data-open="false">
+        <button type="button" aria-expanded="false">
+          <span class="ver">Protocol 2</span>
+          <span class="title">Security and reliability overhaul<small>Noise IK, freshness, roaming, recovery</small></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="release-body"><div>
+          <div class="groups">
+            <div><h3>Security</h3><ul><li>Noise IK: the client proves its static key in the first message</li><li>Authenticated timestamps; identical retransmits get the cached reply</li><li>Per-client inner source checks and identity-bound addresses</li><li>Validated ML-KEM keys, hedged ML-DSA signing with a context string</li></ul></div>
+            <div><h3>Reliability</h3><ul><li>Pending keys promoted on first use, so a lost reply can't stall the tunnel</li><li>Reconnect on a fresh socket, one state machine checked every second</li><li>Clean shutdown restores routes, DNS and IPv6 settings</li></ul></div>
+            <div><h3>Performance</h3><ul><li>Per-flow dispatch keeps each TCP flow in order</li><li>Capped UDP GSO runs and the real tunnel MTU</li></ul></div>
+            <div><h3>Stealth</h3><ul><li>Handshakes wrapped in QUIC short headers with header protection</li><li>Single-use Initial connection IDs; probes are relayed to the cover site</li></ul></div>
+          </div>
+        </div></div>
+      </article>
+      <article class="release" data-open="false">
+        <button type="button" aria-expanded="false">
+          <span class="ver">Earlier</span>
+          <span class="title">Foundations<small>The first hybrid post-quantum tunnel and the Ghost prototype</small></span>
+          <span class="chev" aria-hidden="true"></span>
+        </button>
+        <div class="release-body"><div>
+          <div class="groups">
+            <div><h3>Highlights</h3><ul><li>First hybrid X25519 + ML-KEM handshake with ML-DSA server signatures</li><li>Direct-IO workers for the data plane</li><li>Ghost mode prototype with timing smoothing</li></ul></div>
+          </div>
+        </div></div>
+      </article>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.svg" alt="" width="28" height="28"><span>Lattice<b>Wire</b></span></a>
+    <p>Quantum-safe tunnels, built with Rust.</p>
+    <nav aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>

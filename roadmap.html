@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roadmap · LatticeWire</title>
+  <meta name="description" content="What LatticeWire has shipped and what comes next.">
+  <meta property="og:title" content="Roadmap · LatticeWire">
+  <meta property="og:description" content="What LatticeWire has shipped and what comes next.">
+  <meta property="og:image" content="https://faizi44.github.io/latticewire/assets/social-preview.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F5F7FC">
+  <link rel="icon" href="assets/logo-icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add("js")</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav">
+    <a class="brand" href="index.html" aria-label="LatticeWire home">
+      <img src="assets/logo-mark.svg" alt="" width="34" height="34">
+      <span>Lattice<b>Wire</b></span>
+    </a>
+    <nav id="site-nav" aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html" aria-current="page">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button>
+    <a class="btn btn-ghost" href="index.html#start">Get started</a>
+  </header>
+  <main id="main">
+    <section class="page-hero">
+      <h1>Where LatticeWire is going</h1>
+      <p>What has shipped in protocol 3, and what comes next. Items move up the timeline as they land.</p>
+      <svg class="page-wire" viewBox="0 0 520 26" aria-hidden="true">
+          <defs><linearGradient id="pwGrad" x1="0" x2="1"><stop offset="0" stop-color="#5B3DF5"/><stop offset="1" stop-color="#0891B2"/></linearGradient></defs>
+          <path d="M6 18 L90 18 L120 6 L210 6 L240 18 L330 18 L360 6 L514 6"/>
+          <circle cx="6" cy="18" r="5" style="animation-delay:.2s"/><circle cx="120" cy="6" r="4" style="animation-delay:.45s"/>
+          <circle cx="240" cy="18" r="4" style="animation-delay:.75s"/><circle cx="360" cy="6" r="4" style="animation-delay:1.05s"/>
+          <circle cx="514" cy="6" r="5" style="animation-delay:1.4s"/>
+        </svg>
+    </section>
+    <section>
+      <div class="tabs filters" role="tablist" aria-label="Show" data-filters>
+        <button role="tab" aria-selected="true" data-filter="all">Everything</button>
+        <button role="tab" aria-selected="false" data-filter="shipped">Shipped</button>
+        <button role="tab" aria-selected="false" data-filter="next">Next</button>
+        <button role="tab" aria-selected="false" data-filter="later">Later</button>
+      </div>
+      <div class="timeline" data-timeline>
+        <span class="rail"></span>
+        <div class="phase shipped" data-phase="shipped">
+          <h2>Protocol 3<span class="tag">Shipped</span></h2>
+          <p>Quantum-safe, fast and hard to spot.</p>
+          <ul class="items">
+          <li><b>Hybrid post-quantum handshake</b><span>X25519 + ML-KEM-768 with an ML-DSA-65 signature, one round trip</span></li>
+          <li><b>Signed cipher choice</b><span>AES-256-GCM on AES hardware, XChaCha20-Poly1305 elsewhere</span></li>
+          <li><b>~7.7 Gb/s per stream</b><span>About 1.4× wireguard-go in the same test bed</span></li>
+          <li><b>IPv4 and IPv6</b><span>Inside the tunnel with NAT66, and as the transport</span></li>
+          <li><b>Flood shield</b><span>WireGuard-style cookies under load</span></li>
+          <li><b>Phantom and Ghost</b><span>QUIC-shaped stealth with continuing connection IDs</span></li>
+          <li><b>Per-client stealth keys</b><span>Revoke one device without touching the rest</span></li>
+          <li><b>TLS fallback</b><span>Automatic switch to TLS on 443 when UDP is blocked</span></li>
+          </ul>
+        </div>
+        <div class="phase" data-phase="next">
+          <h2>Next<span class="tag">In progress</span></h2>
+          <p>Proving it in the wild.</p>
+          <ul class="items">
+          <li><b>Real-network benchmarks</b><span>Dedicated Linux servers across real WAN links</span></li>
+          <li><b>Censor testing</b><span>Phantom, Ghost and the TLS fallback against real DPI</span></li>
+          <li><b>Independent audit</b><span>Protocol and implementation review</span></li>
+          <li><b>macOS polish</b><span>Routes, DNS and IPv6 across real machines</span></li>
+          <li><b>Full CI</b><span>Every end-to-end check on every push</span></li>
+          </ul>
+        </div>
+        <div class="phase" data-phase="later">
+          <h2>Later<span class="tag">Planned</span></h2>
+          <p>The next protocol.</p>
+          <ul class="items">
+          <li><b>Half-size handshake</b><span>KEM-based server authentication, 6 packets down to 3</span></li>
+          <li><b>Post-quantum client authentication</b><span>Quantum-safe in both directions</span></li>
+          <li><b>Variable-length connection IDs</b><span>Ghost continues any site's IDs</span></li>
+          <li><b>Browser-grade TLS fingerprint</b><span>For the TCP fallback</span></li>
+          <li><b>Browsing-shaped traffic</b><span>Patterns that match real HTTP/3</span></li>
+          </ul>
+        </div>
+        <div class="phase" data-phase="later">
+          <h2>Ideas</h2>
+          <p>On the horizon.</p>
+          <ul class="items">
+          <li><b>Multi-queue TUN</b><span>Multi-core receive at 25 Gb/s and beyond</span></li>
+          <li><b>Easy onboarding</b><span>lw add-peer and QR codes</span></li>
+          <li><b>Live metrics</b><span>Prometheus and lw show --watch</span></li>
+          <li><b>More platforms</b><span>Windows, Android and iOS</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <a class="brand" href="index.html"><img src="assets/logo-mark.svg" alt="" width="28" height="28"><span>Lattice<b>Wire</b></span></a>
+    <p>Quantum-safe tunnels, built with Rust.</p>
+    <nav aria-label="Pages">
+      <a href="whitepaper.html">Whitepaper</a>
+      <a href="stealth.html">Stealth</a>
+      <a href="benchmarks.html">Benchmarks</a>
+      <a href="roadmap.html">Roadmap</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+  </footer>
+  <script src="app.js" defer></script>
+</body>
+</html>
